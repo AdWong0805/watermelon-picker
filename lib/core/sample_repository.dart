@@ -10,7 +10,7 @@ import 'models.dart';
 class Sample {
   final String id;
   final String wavFilename;
-  final Ripeness label;
+  Ripeness label; // 可编辑（用户切开后修正真实标签）
   String name; // 用户可编辑的名称
   String note;
   final int timestampMs;
@@ -125,11 +125,12 @@ class SampleRepository {
     return sample;
   }
 
-  /// 重命名样本。
-  Future<void> rename(String id, String name) async {
+  /// 更新样本的名称和/或成熟度标签。
+  Future<void> update(String id, {String? name, Ripeness? label}) async {
     final i = _samples.indexWhere((s) => s.id == id);
     if (i < 0) return;
-    _samples[i].name = name;
+    if (name != null) _samples[i].name = name;
+    if (label != null) _samples[i].label = label;
     await _persist();
   }
 

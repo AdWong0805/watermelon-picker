@@ -90,31 +90,33 @@ class _DetectScreenState extends State<DetectScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialog) => AlertDialog(
           title: const Text('保存为训练样本'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('这个瓜切开后实际是？（如实标注才能帮模型变准）',
-                  style: TextStyle(fontSize: 13.5)),
-              const SizedBox(height: 8),
-              ...Ripeness.values.map((rp) => RadioListTile<Ripeness>(
-                    dense: true,
-                    contentPadding: EdgeInsets.zero,
-                    value: rp,
-                    groupValue: chosen,
-                    onChanged: (v) => setDialog(() => chosen = v!),
-                    title: Text(rp.labelZh),
-                  )),
-              const SizedBox(height: 4),
-              TextField(
-                controller: nameCtrl,
-                decoration: const InputDecoration(
-                  labelText: '名称（可选）',
-                  border: OutlineInputBorder(),
-                  isDense: true,
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('这个瓜切开后实际是？（如实标注才能帮模型变准）',
+                    style: TextStyle(fontSize: 13.5)),
+                const SizedBox(height: 8),
+                ...Ripeness.values.map((rp) => RadioListTile<Ripeness>(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      value: rp,
+                      groupValue: chosen,
+                      onChanged: (v) => setDialog(() => chosen = v!),
+                      title: Text(rp.labelZh),
+                    )),
+                const SizedBox(height: 4),
+                TextField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(
+                    labelText: '名称（可选）',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           actions: [
             TextButton(

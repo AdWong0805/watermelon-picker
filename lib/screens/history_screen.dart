@@ -54,31 +54,55 @@ class _HistoryScreenState extends State<HistoryScreen> {
     setState(() => _playingId = s.id);
   }
 
-  Future<void> _rename(Sample s) async {
+  Future<void> _edit(Sample s) async {
     final ctrl = TextEditingController(text: s.name);
-    final name = await showDialog<String>(
+    Ripeness label = s.label;
+    final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('重命名'),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: '给这条录音起个名字',
-            border: OutlineInputBorder(),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialog) => AlertDialog(
+          title: const Text('编辑样本'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: ctrl,
+                  decoration: const InputDecoration(
+                    labelText: '名称（可选）',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text('成熟度标签',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
+                ...Ripeness.values.map((rp) => RadioListTile<Ripeness>(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      value: rp,
+                      groupValue: label,
+                      onChanged: (v) => setDialog(() => label = v!),
+                      title: Text(rp.labelZh),
+                    )),
+              ],
+            ),
           ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('取消')),
+            FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('保存')),
+          ],
         ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
-          FilledButton(
-              onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
-              child: const Text('保存')),
-        ],
       ),
     );
-    if (name != null) {
-      await widget.repository.rename(s.id, name);
+    if (ok == true) {
+      await widget.repository
+          .update(s.id, name: ctrl.text.trim(), label: label);
       setState(() {});
     }
   }
@@ -199,14 +223,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
       ),
       trailing: PopupMenuButton<String>(
         onSelected: (v) {
-          if (v == 'rename') _rename(s);
+          if (v == 'edit') _edit(s);
           if (v == 'delete') _delete(s.id);
         },
         itemBuilder: (_) => const [
           PopupMenuItem(
-            value: 'rename',
+            value: 'edit',
             child: ListTile(
-                leading: Icon(Icons.edit), title: Text('重命名')),
+                leading: Icon(Icons.edit), title: Text('编辑')),
           ),
           PopupMenuItem(
             value: 'delete',
