@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "description": "西瓜敲击声特征规范。Python(librosa) 与 Dart 端必须严格按此参数实现，否则训练/推理特征不一致会严重掉点。",
+  "sample_rate": 22050,
+  "tap_window_seconds": 0.35,
+  "pre_onset_seconds": 0.01,
+  "n_fft": 1024,
+  "hop_length": 512,
+  "win_length": 1024,
+  "window": "hann",
+  "n_mels": 40,
+  "fmin": 50.0,
+  "fmax": 11025.0,
+  "n_mfcc": 13,
+  "feature_order": [
+    "mfcc_mean_0","mfcc_mean_1","mfcc_mean_2","mfcc_mean_3","mfcc_mean_4","mfcc_mean_5","mfcc_mean_6","mfcc_mean_7","mfcc_mean_8","mfcc_mean_9","mfcc_mean_10","mfcc_mean_11","mfcc_mean_12",
+    "mfcc_std_0","mfcc_std_1","mfcc_std_2","mfcc_std_3","mfcc_std_4","mfcc_std_5","mfcc_std_6","mfcc_std_7","mfcc_std_8","mfcc_std_9","mfcc_std_10","mfcc_std_11","mfcc_std_12",
+    "spectral_centroid","spectral_bandwidth","spectral_rolloff","zero_crossing_rate","dominant_freq","log_energy","decay_time"
+  ],
+  "labels": ["unripe", "ripe", "overripe"],
+  "labels_zh": ["未熟", "适中(好吃)", "过熟"]
+}
