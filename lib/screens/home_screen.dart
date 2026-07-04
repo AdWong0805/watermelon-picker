@@ -32,7 +32,7 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('瓜熟 · 西瓜成熟度检测'),
+        title: const Text('熟了吗'),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined),

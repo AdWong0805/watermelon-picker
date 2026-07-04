@@ -49,7 +49,7 @@ class AboutScreen extends StatelessWidget {
                   '6. 基于 BMV 特征的西瓜成熟度无损检测, 农业工程学报 2010.',
             ),
             SizedBox(height: 16),
-            Center(child: Text('瓜熟 v1.0.0', style: TextStyle(color: Colors.black45))),
+            Center(child: Text('熟了吗 v1.0.0', style: TextStyle(color: Colors.black45))),
           ],
         ),
       ),

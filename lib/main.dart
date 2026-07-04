@@ -44,7 +44,7 @@ class GuaShuApp extends StatelessWidget {
       brightness: Brightness.light,
     );
     return MaterialApp(
-      title: '瓜熟',
+      title: '熟了吗',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: scheme,
