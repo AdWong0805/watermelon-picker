@@ -15,6 +15,15 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   bool _exporting = false;
+  final GlobalKey _shareKey = GlobalKey();
+
+  /// iPad/iOS 分享面板需要一个锚点矩形，否则报 sharePositionOrigin 错误。
+  Rect? _shareOrigin() {
+    final ctx = _shareKey.currentContext ?? context;
+    final box = ctx.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) return null;
+    return box.localToGlobal(Offset.zero) & box.size;
+  }
 
   Future<void> _export() async {
     if (widget.repository.total == 0) {
@@ -23,10 +32,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
       );
       return;
     }
+    final origin = _shareOrigin();
     setState(() => _exporting = true);
     try {
       final zip = await widget.repository.exportZip();
-      await Share.shareXFiles([XFile(zip)], text: '瓜熟采集数据（含 labels.csv）');
+      await Share.shareXFiles(
+        [XFile(zip)],
+        text: '瓜熟采集数据（含 labels.csv）',
+        sharePositionOrigin: origin,
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -51,6 +65,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         title: const Text('我的采集数据'),
         actions: [
           IconButton(
+            key: _shareKey,
             icon: _exporting
                 ? const SizedBox(
                     width: 20,
