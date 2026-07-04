@@ -11,7 +11,8 @@ class Sample {
   final String id;
   final String wavFilename;
   final Ripeness label;
-  final String note;
+  String name; // 用户可编辑的名称
+  String note;
   final int timestampMs;
   final double dominantFreq;
   bool uploaded; // 是否已上传到云端（架构预留；当前恒为 false）
@@ -20,16 +21,26 @@ class Sample {
     required this.id,
     required this.wavFilename,
     required this.label,
+    this.name = '',
     required this.note,
     required this.timestampMs,
     required this.dominantFreq,
     this.uploaded = false,
   });
 
+  /// 展示用名称：优先用户命名，否则回退到"标签 + 时间"。
+  String get displayName {
+    if (name.trim().isNotEmpty) return name.trim();
+    final dt = DateTime.fromMillisecondsSinceEpoch(timestampMs);
+    return '${label.labelZh} ${dt.month}/${dt.day} '
+        '${dt.hour}:${dt.minute.toString().padLeft(2, '0')}';
+  }
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'wav': wavFilename,
         'label': label.labelEn,
+        'name': name,
         'note': note,
         'timestamp_ms': timestampMs,
         'dominant_freq': dominantFreq,
@@ -40,6 +51,7 @@ class Sample {
         id: j['id'] as String,
         wavFilename: j['wav'] as String,
         label: Ripeness.fromLabel(j['label'] as String) ?? Ripeness.ripe,
+        name: (j['name'] ?? '') as String,
         note: (j['note'] ?? '') as String,
         timestampMs: (j['timestamp_ms'] as num).toInt(),
         dominantFreq: ((j['dominant_freq'] ?? 0) as num).toDouble(),
@@ -93,6 +105,7 @@ class SampleRepository {
     required Ripeness label,
     required String note,
     required double dominantFreq,
+    String name = '',
   }) async {
     final dir = await _dataDir;
     final id = DateTime.now().millisecondsSinceEpoch.toString();
@@ -102,6 +115,7 @@ class SampleRepository {
       id: id,
       wavFilename: filename,
       label: label,
+      name: name,
       note: note,
       timestampMs: int.parse(id),
       dominantFreq: dominantFreq,
@@ -109,6 +123,14 @@ class SampleRepository {
     _samples.insert(0, sample);
     await _persist();
     return sample;
+  }
+
+  /// 重命名样本。
+  Future<void> rename(String id, String name) async {
+    final i = _samples.indexWhere((s) => s.id == id);
+    if (i < 0) return;
+    _samples[i].name = name;
+    await _persist();
   }
 
   /// 取样本对应的 wav 文件（供上传等使用）。

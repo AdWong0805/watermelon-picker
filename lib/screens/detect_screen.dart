@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/audio_recorder.dart';
 import '../core/detection_service.dart';
 import '../core/models.dart';
+import '../core/sample_repository.dart';
 import '../widgets/confidence_bar.dart';
 import '../widgets/spectrum_painter.dart';
 
@@ -13,8 +14,13 @@ const _brandLight = Color(0xFF66BB6A);
 
 class DetectScreen extends StatefulWidget {
   final DetectionService service;
+  final SampleRepository repository;
 
-  const DetectScreen({super.key, required this.service});
+  const DetectScreen({
+    super.key,
+    required this.service,
+    required this.repository,
+  });
 
   @override
   State<DetectScreen> createState() => _DetectScreenState();
@@ -25,6 +31,7 @@ class _DetectScreenState extends State<DetectScreen> {
   _Stage _stage = _Stage.idle;
   DetectionResult? _result;
   String? _error;
+  bool _saved = false;
 
   @override
   void dispose() {
@@ -42,6 +49,7 @@ class _DetectScreenState extends State<DetectScreen> {
     setState(() {
       _stage = _Stage.recording;
       _result = null;
+      _saved = false;
     });
   }
 
@@ -68,6 +76,71 @@ class _DetectScreenState extends State<DetectScreen> {
         _error = '分析出错：$e';
       });
     }
+  }
+
+  /// 把这次录音保存为训练样本：让用户确认切开后的真实结果 + 起名。
+  Future<void> _saveSample() async {
+    final r = _result;
+    if (r == null) return;
+    Ripeness chosen = r.prediction.label;
+    final nameCtrl = TextEditingController();
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialog) => AlertDialog(
+          title: const Text('保存为训练样本'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('这个瓜切开后实际是？（如实标注才能帮模型变准）',
+                  style: TextStyle(fontSize: 13.5)),
+              const SizedBox(height: 8),
+              ...Ripeness.values.map((rp) => RadioListTile<Ripeness>(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    value: rp,
+                    groupValue: chosen,
+                    onChanged: (v) => setDialog(() => chosen = v!),
+                    title: Text(rp.labelZh),
+                  )),
+              const SizedBox(height: 4),
+              TextField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(
+                  labelText: '名称（可选）',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('取消')),
+            FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('保存')),
+          ],
+        ),
+      ),
+    );
+
+    if (ok != true) return;
+    await widget.repository.add(
+      srcWavPath: r.wavPath,
+      label: chosen,
+      note: '',
+      name: nameCtrl.text.trim(),
+      dominantFreq: r.taps.isNotEmpty ? r.taps.first.dominantFreq : 0,
+    );
+    if (!mounted) return;
+    setState(() => _saved = true);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('已保存到"我的采集数据"')),
+    );
   }
 
   @override
@@ -365,6 +438,8 @@ class _DetectScreenState extends State<DetectScreen> {
                     ),
                   ),
                 const SizedBox(height: 12),
+                _saveSampleButton(),
+                const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -399,6 +474,24 @@ class _DetectScreenState extends State<DetectScreen> {
   }
 
   // ---- 复用小组件 ----
+
+  Widget _saveSampleButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: _brandGreen,
+          side: const BorderSide(color: _brandGreen),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16)),
+        ),
+        onPressed: _saved ? null : _saveSample,
+        icon: Icon(_saved ? Icons.check_circle : Icons.save_alt),
+        label: Text(_saved ? '已保存为训练样本' : '保存这次录音（用于训练）'),
+      ),
+    );
+  }
 
   Widget _bottomButton({
     required String label,

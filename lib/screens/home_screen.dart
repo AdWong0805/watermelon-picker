@@ -97,7 +97,10 @@ class HomeScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (_) => DetectScreen(service: service)),
+                    builder: (_) => DetectScreen(
+                          service: service,
+                          repository: repository,
+                        )),
               ),
             ),
             _NavCard(
